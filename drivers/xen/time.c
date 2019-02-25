@@ -18,7 +18,7 @@
 #include <xen/xen-ops.h>
 
 /* runstate info updated by Xen */
-static DEFINE_PER_CPU(struct vcpu_runstate_info, xen_runstate);
+static DEFINE_PER_CPU(struct vcpu_runstate_info, xen_runstate) __aligned(64);
 
 /* return an consistent snapshot of 64-bit time/counter value */
 static u64 get64(const u64 *p)
@@ -93,9 +93,9 @@ void xen_setup_runstate_info(int cpu)
 {
 	struct vcpu_register_runstate_memory_area area;
 
-	area.addr.v = &per_cpu(xen_runstate, cpu);
+	area.addr.v = virt_to_phys(&per_cpu(xen_runstate, cpu));
 
-	if (HYPERVISOR_vcpu_op(VCPUOP_register_runstate_memory_area,
+	if (HYPERVISOR_vcpu_op(VCPUOP_register_runstate_phys_memory_area,
 			       xen_vcpu_nr(cpu), &area))
 		BUG();
 }
